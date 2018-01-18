@@ -1,0 +1,71 @@
+
+-------------------------------------------------------------------------------------------------------
+http://labdegaragem.com/profiles/blogs/tutorial-utilizando-leitor-e-tags-rfid 
+-------------------------------------------------------------------------------------------------------
+#include <SoftwareSerial.h> 
+SoftwareSerial mySerial(2, 3);
+
+char lerID[] = {
+  0xAA , 0x00, 0x03, 0x25, 0x26, 0x00, 0x00, 0xBB }; 
+
+int leitura[12];
+
+int tagValida [5] = {
+  0x5E , 0x16, 0x8F, 0x52};//Altere aqui de acordo com a sua TAG
+//tagBilhete {0x5E , 0x16, 0x8F, 0x52};
+//tagAzul {0x42 , 0xBC, 0x91, 0x5D};
+//sem TAG AA0218380BB
+
+void setup()
+{
+  pinMode(13, OUTPUT);
+
+  Serial.begin(57600);
+  Serial.println("Lab de Garagem - RFID");
+  Serial.println("Exemplo de Leitura de tags: ");
+
+  mySerial.begin(9600);
+}
+
+void loop()
+{ 
+
+  delay (500);
+  int IDbyte=0;
+  int j = 0;
+  Serial.print("Leitura do ID ");
+
+  while (mySerial.available())
+  {
+    leitura[j]= mySerial.read(); //buffer para armazenar o 
+    //Serial.print(leitura[j],HEX);
+    j++;
+  }
+  //Serial.println("");
+  for (j=5 ; j<9 ; j++)// Retira apenas os Bytes com o ID dos tag
+  {
+    Serial.print(leitura[j],HEX);
+    if (leitura[j]==tagValida[j-5])
+      IDbyte++;
+  }
+
+  if (IDbyte ==4)
+  {
+    Serial.println("");
+    Serial.println("ID Valido. Pisca LED!!!");
+    digitalWrite(13,!digitalRead(13)); //Inverte o valor do LED do pino 13
+  }
+  else
+  {
+    Serial.println("");
+    Serial.println("ID Invalido");
+  }
+
+  for (j =0 ; j < 8 ; j++) //Envia comando para leitura do tag
+    mySerial.write(lerID[j]);
+
+  for (j =0 ; j < 12 ; j++) //Limpa o Buffer de leitura dos tags
+    leitura[j] = 0;
+
+  Serial.println("");
+}
